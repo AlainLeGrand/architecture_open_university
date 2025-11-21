@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture - Plateforme Universitaire Open Source</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .architecture-diagram {
+            position: relative;
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 40px;
+            min-height: 1200px;
+        }
+
+        .layer {
+            position: relative;
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .layer-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid;
+        }
+
+        .layer-internet { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .layer-internet .layer-title { border-left-color: white; color: white; }
+
+        .layer-proxy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .layer-proxy .layer-title { border-left-color: white; color: white; }
+
+        .layer-frontend { border: 3px solid #48bb78; }
+        .layer-frontend .layer-title { border-left-color: #48bb78; color: #48bb78; }
+
+        .layer-backend { border: 3px solid #4299e1; }
+        .layer-backend .layer-title { border-left-color: #4299e1; color: #4299e1; }
+
+        .layer-monitoring { border: 3px solid #ed8936; }
+        .layer-monitoring .layer-title { border-left-color: #ed8936; color: #ed8936; }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .service-box {
+            position: relative;
+            padding: 15px;
+            border-radius: 10px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .service-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .service-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .service-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .service-url {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .service-port {
+            font-size: 11px;
+            color: #a0aec0;
+            font-family: monospace;
+        }
+
+        .service-db {
+            font-size: 10px;
+            color: #4299e1;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Couleurs spécifiques par service */
+        .service-drupal { border-left: 4px solid #0678be; }
+        .service-moodle { border-left: 4px solid #f98012; }
+        .service-keycloak { border-left: 4px solid #c72c48; }
+        .service-nextcloud { border-left: 4px solid #0082c9; }
+        .service-btcpay { border-left: 4px solid #51b13e; }
+        .service-solr { border-left: 4px solid #d9411e; }
+        .service-n8n { border-left: 4px solid #ea4b71; }
+        .service-kasm { border-left: 4px solid #4a90e2; }
+        .service-openai { border-left: 4px solid #10a37f; }
+        .service-traefik { border-left: 4px solid #24a1c1; }
+        .service-postgres { border-left: 4px solid #336791; }
+        .service-redis { border-left: 4px solid #dc382d; }
+        .service-prometheus { border-left: 4px solid #e6522c; }
+        .service-grafana { border-left: 4px solid #f46800; }
+        .service-kali { border-left: 4px solid #557c94; }
+
+        .connection-line {
+            position: absolute;
+            background: #cbd5e0;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .connection-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #cbd5e0;
+            z-index: 2;
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 350px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .info-panel.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .info-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .info-detail {
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #edf2f7;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #2d3748;
+            margin-right: 6px;
+            margin-top: 6px;
+        }
+
+        .close-info {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #a0aec0;
+        }
+
+        .close-info:hover {
+            color: #2d3748;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .export-buttons, .info-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="diagramContainer">
+        <h1>🎓 Architecture - Plateforme Universitaire Open Source</h1>
+        <p class="subtitle">Projet CR465 - Architecture conteneurisée avec Docker Compose</p>
+
+        <!-- Statistiques -->
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Services déployés</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">2</div>
+                <div class="stat-label">Réseaux isolés</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">9</div>
+                <div class="stat-label">Bases de données</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Modules métiers</div>
+            </div>
+        </div>
+
+        <!-- Légende -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                <span>Internet</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                <span>Reverse Proxy</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #48bb78;"></div>
+                <span>Frontend Network</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4299e1;"></div>
+                <span>Backend Network</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ed8936;"></div>
+                <span>Monitoring</span>
+            </div>
+        </div>
+
+        <!-- Diagramme -->
+        <div class="architecture-diagram">
+            <!-- Couche 1: Internet -->
+            <div class="layer layer-internet">
+                <div class="layer-title">🌐 Couche Internet - Utilisateurs</div>
+                <div style="text-align: center; padding: 20px; color: white;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">👥</div>
+                    <div style="font-size: 16px; font-weight: 500;">Étudiants | Enseignants | Administrateurs</div>
+                    <div style="font-size: 13px; opacity: 0.9; margin-top: 8px;">HTTPS (443) → Toutes les requêtes</div>
+                </div>
+            </div>
+
+            <!-- Flèche vers Traefik -->
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="font-size: 32px; color: #cbd5e0;">⬇️</div>
+                <div style="font-size: 13px; color: #718096; font-weight: 500;">HTTPS Traffic</div>
+            </div>
+
+            <!-- Couche 2: Traefik -->
+            <div class="layer layer-proxy">
+                <div class="layer-title">🔀 Reverse Proxy & SSL Termination</div>
+                <div class="services-grid">
+                    <div class="service-box service-traefik" onclick="showInfo('traefik')">
+                        <div class="service-icon">🚦</div>
+                        <div class="service-name">Traefik v3.0</div>
+                        <div class="service-url">dashboard.university.local</div>
+                        <div class="service-port">Ports: 80, 443, 8080</div>
+                        <div class="info-badge">Let's Encrypt SSL</div>
+                        <div class="info-badge">Load Balancing</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flèche vers services -->
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="font-size: 32px; color: #cbd5e0;">⬇️</div>
+                <div style="font-size: 13px; color: #718096; font-weight: 500;">Routing Dynamique</div>
+            </div>
+
+            <!-- Couche 3: Frontend -->
+            <div class="layer layer-frontend">
+                <div class="layer-title">🌐 Réseau Frontend (university-frontend)</div>
+                <div class="services-grid">
+
+                    <div class="service-box service-drupal" onclick="showInfo('drupal')">
+                        <div class="service-icon">📰</div>
+                        <div class="service-name">Drupal CRM</div>
+                        <div class="service-url">www.university.local</div>
+                        <div class="service-url">crm.university.local</div>
+                        <div class="service-port">Port: 8088</div>
+                        <div class="service-db">💾 drupal_db</div>
+                    </div>
+
+                    <div class="service-box service-moodle" onclick="showInfo('moodle')">
+                        <div class="service-icon">📚</div>
+                        <div class="service-name">Moodle LMS</div>
+                        <div class="service-url">lms.university.local</div>
+                        <div class="service-port">Port: 8081</div>
+                        <div class="service-db">💾 moodle_db</div>
+                    </div>
+
+                    <div class="service-box service-keycloak" onclick="showInfo('keycloak')">
+                        <div class="service-icon">🔐</div>
+                        <div class="service-name">Keycloak SSO</div>
+                        <div class="service-url">sso.university.local</div>
+                        <div class="service-port">Port: 8080</div>
+                        <div class="service-db">💾 keycloak_db</div>
+                    </div>
+
+                    <div class="service-box service-nextcloud" onclick="showInfo('nextcloud')">
+                        <div class="service-icon">☁️</div>
+                        <div class="service-name">Nextcloud</div>
+                        <div class="service-url">files.university.local</div>
+                        <div class="service-port">Port: 8086</div>
+                        <div class="service-db">💾 nextcloud_db</div>
+                    </div>
+
+                    <div class="service-box service-btcpay" onclick="showInfo('btcpay')">
+                        <div class="service-icon">💳</div>
+                        <div class="service-name">BTCPay Server</div>
+                        <div class="service-url">payment.university.local</div>
+                        <div class="service-port">Port: 49392</div>
+                        <div class="service-db">💾 btcpay_db</div>
+                    </div>
+
+                    <div class="service-box service-solr" onclick="showInfo('solr')">
+                        <div class="service-icon">🔍</div>
+                        <div class="service-name">Apache Solr</div>
+                        <div class="service-url">search.university.local</div>
+                        <div class="service-port">Port: 8983</div>
+                        <div class="service-db">Index: Drupal + Moodle</div>
+                    </div>
+
+                    <div class="service-box service-n8n" onclick="showInfo('n8n')">
+                        <div class="service-icon">🔄</div>
+                        <div class="service-name">n8n Workflow</div>
+                        <div class="service-url">workflow.university.local</div>
+                        <div class="service-port">Port: 5678</div>
+                        <div class="service-db">💾 n8n_db</div>
+                    </div>
+
+                    <div class="service-box service-kasm" onclick="showInfo('kasm')">
+                        <div class="service-icon">🖥️</div>
+                        <div class="service-name">KasmWeb Labs</div>
+                        <div class="service-url">lab.university.local</div>
+                        <div class="service-port">Port: 443 (HTTPS)</div>
+                        <div class="service-db">Bureaux virtuels</div>
+                    </div>
+
+                    <div class="service-box service-openai" onclick="showInfo('openai')">
+                        <div class="service-icon">🤖</div>
+                        <div class="service-name">OpenAI WebUI</div>
+                        <div class="service-url">ai.university.local</div>
+                        <div class="service-port">Port: 8084</div>
+                        <div class="service-db">💾 openai_db</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Flèches bidirectionnelles vers Backend -->
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="font-size: 32px; color: #cbd5e0;">⬇️ ⬆️</div>
+                <div style="font-size: 13px; color: #718096; font-weight: 500;">API REST, SQL, Cache</div>
+            </div>
+
+            <!-- Couche 4: Backend -->
+            <div class="layer layer-backend">
+                <div class="layer-title">🔒 Réseau Backend (university-backend) - ISOLÉ</div>
+                <div class="services-grid">
+
+                    <div class="service-box service-postgres" onclick="showInfo('postgres')">
+                        <div class="service-icon">🐘</div>
+                        <div class="service-name">PostgreSQL 15</div>
+                        <div class="service-url">Internal: postgres:5432</div>
+                        <div class="service-port">NOT EXPOSED</div>
+                        <div class="service-db">9 bases de données</div>
+                    </div>
+
+                    <div class="service-box service-redis" onclick="showInfo('redis')">
+                        <div class="service-icon">⚡</div>
+                        <div class="service-name">Redis Cache</div>
+                        <div class="service-url">Internal: redis:6379</div>
+                        <div class="service-port">NOT EXPOSED</div>
+                        <div class="service-db">Cache Nextcloud</div>
+                    </div>
+
+                    <div class="service-box service-prometheus" onclick="showInfo('prometheus')">
+                        <div class="service-icon">📊</div>
+                        <div class="service-name">Prometheus</div>
+                        <div class="service-url">metrics.university.local</div>
+                        <div class="service-port">Port: 9090</div>
+                        <div class="service-db">Collecte métriques</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Couche 5: Monitoring -->
+            <div class="layer layer-monitoring">
+                <div class="layer-title">📈 Monitoring & Sécurité</div>
+                <div class="services-grid">
+
+                    <div class="service-box service-grafana" onclick="showInfo('grafana')">
+                        <div class="service-icon">📉</div>
+                        <div class="service-name">Grafana</div>
+                        <div class="service-url">monitoring.university.local</div>
+                        <div class="service-port">Port: 3000</div>
+                        <div class="service-db">💾 grafana_db</div>
+                    </div>
+
+                    <div class="service-box service-kali" onclick="showInfo('kali')">
+                        <div class="service-icon">🛡️</div>
+                        <div class="service-name">Kali Security</div>
+                        <div class="service-url">security.university.local</div>
+                        <div class="service-port">Port: 6080 (VNC)</div>
+                        <div class="service-db">Tests de sécurité</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Caractéristiques clés -->
+        <div style="background: #edf2f7; padding: 25px; border-radius: 12px; margin-top: 30px;">
+            <h3 style="color: #2d3748; margin-bottom: 15px; text-align: center;">🔑 Caractéristiques Clés</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78;">
+                    <strong>✅ SSL Automatique</strong><br>
+                    <small>Certificats Let's Encrypt via Traefik</small>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                    <strong>✅ SSO Centralisé</strong><br>
+                    <small>Keycloak OpenID Connect</small>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ed8936;">
+                    <strong>✅ Base Partagée</strong><br>
+                    <small>PostgreSQL 15 pour tous les services</small>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #9f7aea;">
+                    <strong>✅ Monitoring Temps Réel</strong><br>
+                    <small>Prometheus + Grafana dashboards</small>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f56565;">
+                    <strong>✅ Isolation Réseau</strong><br>
+                    <small>Frontend/Backend séparés</small>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #38b2ac;">
+                    <strong>✅ Scalabilité</strong><br>
+                    <small>Scaling horizontal avec Docker Swarm</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boutons d'export -->
+        <div class="export-buttons" id="exportButtons">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Exporter PDF</button>
+            <button class="btn btn-secondary" onclick="downloadPNG()">💾 Télécharger PNG</button>
+            <button class="btn btn-secondary" onclick="downloadSVG()">🖼️ Télécharger SVG</button>
+            <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copier Architecture</button>
+        </div>
+
+    </div>
+
+    <!-- Panneau d'information -->
+    <div class="info-panel" id="infoPanel" aria-hidden="true">
+        <span class="close-info" onclick="closeInfo()" role="button" aria-label="Fermer">×</span>
+        <div id="infoContent"></div>
+    </div>
+
+    <!-- html2canvas CDN (pour export PNG) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5sH0G6sYxE3rH2k1V3ZrO6qj0i9v6Wv3wYqQnH1k7B1yN6kqJ1y4nF1Z2H2kN0e5K3e4Q2k1q0Q1Z2k3qA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        const serviceInfo = {
+            traefik: {
+                name: "Traefik v3.0",
+                description: "Reverse proxy moderne avec gestion SSL automatique via Let's Encrypt. Route toutes les requêtes vers les services appropriés.",
+                features: [
+                    "SSL/TLS automatique (Let's Encrypt)",
+                    "Load balancing",
+                    "Routing dynamique basé sur les labels Docker",
+                    "Middlewares (auth, rate limiting, compression)",
+                    "Dashboard de monitoring intégré",
+                    "Support HTTP/2 et HTTP/3"
+                ],
+                connections: ["Tous les services frontend", "Prometheus (métriques)"],
+                security: "Authentification admin via Basic Auth"
+            },
+            drupal: {
+                name: "Drupal 10 CRM",
+                description: "CMS open source pour le site vitrine et le CRM universitaire. Gère les inscriptions, profils étudiants et contenus institutionnels.",
+                features: [
+                    "Site web institutionnel",
+                    "Formulaires d'inscription (Webform)",
+                    "CRM universitaire (profils étudiants)",
+                    "Module Commerce (boutique)",
+                    "Gestion restauration",
+                    "API REST pour intégrations"
+                ],
+                connections: ["Keycloak SSO", "PostgreSQL (drupal_db)", "n8n (webhooks)", "Solr (recherche)"],
+                security: "Authentification SSO, permissions basées sur rôles"
+            },
+            moodle: {
+                name: "Moodle 4.3 LMS",
+                description: "Plateforme d'apprentissage en ligne. Gère les cours, examens, notes et interactions pédagogiques.",
+                features: [
+                    "Catalogue de cours",
+                    "Quiz et examens en ligne",
+                    "Forums de discussion",
+                    "Système de notation",
+                    "Suivi des étudiants",
+                    "API Web Services",
+                    "Intégration H5P"
+                ],
+                connections: ["Keycloak SSO", "PostgreSQL (moodle_db)", "Nextcloud (fichiers)", "n8n (sync)", "Solr (recherche)"],
+                security: "SSO OpenID Connect, rôles Teacher/Student"
+            },
+            keycloak: {
+                name: "Keycloak 24 SSO",
+                description: "Serveur d'authentification centralisée. Gère tous les logins et permissions de la plateforme.",
+                features: [
+                    "OpenID Connect / OAuth 2.0",
+                    "Gestion centralisée des utilisateurs",
+                    "Multi-factor authentication (MFA)",
+                    "Fédération d'identités",
+                    "Tokens JWT signés",
+                    "Gestion des rôles et permissions"
+                ],
+                connections: ["Drupal", "Moodle", "Nextcloud", "tous services authentifiés", "PostgreSQL (keycloak_db)"],
+                security: "Tokens JWT, refresh tokens, HTTPS uniquement"
+            },
+            nextcloud: {
+                name: "Nextcloud 28",
+                description: "Plateforme de partage et collaboration. Stockage sécurisé des fichiers académiques.",
+                features: [
+                    "Partage de fichiers",
+                    "Collaboration en ligne (OnlyOffice)",
+                    "Calendrier et contacts (CalDAV/CardDAV)",
+                    "Versioning des documents",
+                    "Synchronisation desktop/mobile",
+                    "Recherche full-text (Solr)"
+                ],
+                connections: ["Keycloak SSO", "PostgreSQL (nextcloud_db)", "Redis (cache)", "Solr (recherche)"],
+                security: "Chiffrement de bout en bout, SSO, partage sécurisé"
+            },
+            btcpay: {
+                name: "BTCPay Server",
+                description: "Serveur de paiement auto-hébergé. Supporte cryptomonnaies et paiements traditionnels.",
+                features: [
+                    "Paiements Bitcoin / Lightning",
+                    "Support multi-devises",
+                    "Webhooks pour notifications",
+                    "API REST complète",
+                    "Facturation automatique",
+                    "Reporting financier"
+                ],
+                connections: ["n8n (webhooks)", "PostgreSQL (btcpay_db)", "Drupal/Moodle (intégration)"],
+                security: "API keys, webhooks signés, HTTPS"
+            },
+            solr: {
+                name: "Apache Solr 9",
+                description: "Moteur de recherche transversal. Indexe et recherche dans tous les contenus de la plateforme.",
+                features: [
+                    "Recherche full-text",
+                    "Facettes et filtres avancés",
+                    "Suggestions de recherche",
+                    "Scoring et pertinence",
+                    "Indexation temps réel",
+                    "API REST"
+                ],
+                connections: ["Drupal (search_api_solr)", "Moodle (plugin)", "Nextcloud (fulltextsearch)"],
+                security: "Accès restreint via réseau interne"
+            },
+            n8n: {
+                name: "n8n Workflow",
+                description: "Plateforme d'automatisation. Orchestre les intégrations entre tous les services.",
+                features: [
+                    "Workflows visuels",
+                    "Intégrations API REST",
+                    "Webhooks",
+                    "Transformations de données",
+                    "Scheduling (cron)",
+                    "Connecteurs Drupal/Moodle/Keycloak"
+                ],
+                connections: ["Drupal", "Moodle", "Keycloak", "BTCPay", "Nextcloud", "PostgreSQL (n8n_db)"],
+                security: "Basic Auth, API keys, secrets Docker"
+            },
+            kasm: {
+                name: "KasmWeb",
+                description: "Laboratoires virtuels à distance. Fournit des bureaux Ubuntu/CentOS pour les TP étudiants.",
+                features: [
+                    "Bureaux virtuels (VNC)",
+                    "Environnements isolés",
+                    "Pré-configurés (dev tools)",
+                    "Accès via navigateur",
+                    "Session persistence",
+                    "Multi-utilisateurs"
+                ],
+                connections: ["Keycloak SSO", "Docker socket (création conteneurs)"],
+                security: "Isolation par conteneur, SSO, VNC over HTTPS"
+            },
+            openai: {
+                name: "OpenAI WebUI",
+                description: "Interface IA pour assistance pédagogique. Chatbots et génération de contenu.",
+                features: [
+                    "Chatbot pédagogique",
+                    "Intégration OpenAI / Ollama",
+                    "Génération de contenu",
+                    "Assistance aux étudiants 24/7",
+                    "Historique des conversations",
+                    "API REST"
+                ],
+                connections: ["PostgreSQL (openai_db)", "Keycloak SSO"],
+                security: "API keys, rate limiting, SSO"
+            },
+            postgres: {
+                name: "PostgreSQL 15",
+                description: "Base de données relationnelle centralisée. Héberge toutes les bases de l'écosystème.",
+                features: [
+                    "9 bases de données isolées",
+                    "Transactions ACID",
+                    "Réplication (future)",
+                    "Backup automatiques",
+                    "Healthcheck actif",
+                    "SSL/TLS supporté"
+                ],
+                connections: ["Tous les services applicatifs", "pgAdmin (admin)"],
+                security: "Port non exposé, passwords via Docker Secrets, isolation réseau"
+            },
+            redis: {
+                name: "Redis",
+                description: "Cache en mémoire. Accélère les performances de Nextcloud.",
+                features: [
+                    "Cache APCu pour Nextcloud",
+                    "Persistence optionnelle",
+                    "Performances < 1ms",
+                    "Pub/Sub pour notifications",
+                    "Expiration automatique"
+                ],
+                connections: ["Nextcloud uniquement"],
+                security: "Réseau backend uniquement, pas d'accès externe"
+            },
+            prometheus: {
+                name: "Prometheus",
+                description: "Système de monitoring. Collecte toutes les métriques des services.",
+                features: [
+                    "Scraping des métriques",
+                    "Time-series database",
+                    "Langage de requête PromQL",
+                    "Alerting rules",
+                    "Service discovery",
+                    "Exporters (Traefik, PostgreSQL, Node)"
+                ],
+                connections: ["Tous les services (scraping)", "Grafana (datasource)", "AlertManager"],
+                security: "Authentification admin, réseau backend"
+            },
+            grafana: {
+                name: "Grafana",
+                description: "Plateforme de visualisation. Dashboards de monitoring en temps réel.",
+                features: [
+                    "Dashboards interactifs",
+                    "Alertes configurables",
+                    "Intégration Prometheus",
+                    "Panels personnalisables",
+                    "Notifications (email, Slack)",
+                    "Gestion d'équipes"
+                ],
+                connections: ["Prometheus (datasource)", "PostgreSQL (grafana_db)", "SMTP (alertes)"],
+                security: "Authentification admin, rôles viewer/editor/admin"
+            },
+            kali: {
+                name: "Kali Linux Security",
+                description: "Conteneur de tests de sécurité. Embarque tous les outils de pentest.",
+                features: [
+                    "Nmap (scan de ports)",
+                    "Nikto (vulnérabilités web)",
+                    "SQLMap (injection SQL)",
+                    "Metasploit Framework",
+                    "OWASP ZAP",
+                    "SSLScan, Nuclei, Hydra"
+                ],
+                connections: ["Tous les services (tests)", "Docker socket (scan images)"],
+                security: "Accès admin uniquement, VNC over HTTPS"
+            }
+        };
+
+        function showInfo(service) {
+            const info = serviceInfo[service];
+            if (!info) return;
+            const panel = document.getElementById('infoPanel');
+            const content = document.getElementById('infoContent');
+
+            let html = `
+                <div class="info-title">${info.name}</div>
+                <div class="info-detail">${info.description}</div>
+
+                <div style="margin-top: 15px;">
+                    <strong style="color: #2d3748;">🎯 Fonctionnalités clés:</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        ${info.features.map(f => `<li style="font-size: 12px; color: #4a5568; margin-bottom: 4px;">${f}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong style="color: #2d3748;">🔗 Connexions:</strong>
+                    <div style="margin-top: 8px;">
+                        ${(info.connections || []).map(c => `<span class="info-badge">${c}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong style="color: #2d3748;">🔒 Sécurité:</strong>
+                    <div class="info-detail" style="margin-top: 5px;">${info.security || ''}</div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            panel.classList.add('active');
+            panel.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeInfo() {
+            const panel = document.getElementById('infoPanel');
+            panel.classList.remove('active');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+
+        // Export PNG using html2canvas
+        async function downloadPNG() {
+            const container = document.getElementById('diagramContainer');
+            if (!container || typeof html2canvas !== 'function') {
+                alert('Impossible d\'exporter : html2canvas introuvable.');
+                return;
+            }
+
+            // Masquer panneaux et boutons pour un rendu propre
+            const infoPanel = document.getElementById('infoPanel');
+            const exportButtons = document.getElementById('exportButtons');
+            const prevInfoDisplay = infoPanel.style.display;
+            const prevExportDisplay = exportButtons.style.display;
+            infoPanel.style.display = 'none';
+            exportButtons.style.display = 'none';
+
+            try {
+                // scale 2 pour meilleure résolution
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    allowTaint: true,
+                    useCORS: true,
+                    backgroundColor: null
+                });
+                canvas.toBlob(function(blob) {
+                    if (!blob) {
+                        alert('Erreur lors de la génération du PNG.');
+                        return;
+                    }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'architecture_diagram.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors de l\'export PNG : ' + err.message);
+            } finally {
+                // restaurer affichage
+                infoPanel.style.display = prevInfoDisplay;
+                exportButtons.style.display = prevExportDisplay;
+            }
+        }
+
+        // Export SVG basique: encapsule le contenu de .container dans un <foreignObject>
+        function downloadSVG() {
+            const el = document.getElementById('diagramContainer');
+            if (!el) {
+                alert('Élément non trouvé pour export.');
+                return;
+            }
+            // Sérialiser le contenu HTML de la "container"
+            const serializer = new XMLSerializer();
+            const cloned = el.cloneNode(true);
+            const scriptTags = cloned.querySelectorAll('script');
+            scriptTags.forEach(s => s.remove());
+
+            const serialized = serializer.serializeToString(cloned);
+            const width = el.offsetWidth;
+            const height = el.offsetHeight;
+            const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <foreignObject width="100%" height="100%">
+    ${serialized}
+  </foreignObject>
+</svg>`;
+
+            const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'architecture_diagram.svg';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            const text = `
+ARCHITECTURE PLATEFORME UNIVERSITAIRE OPEN SOURCE
+Projet CR465 - Docker Compose
+
+📊 STATISTIQUES:
+- 15 services déployés
+- 2 réseaux isolés (frontend/backend)
+- 9 bases de données PostgreSQL
+- 12 modules métiers
+
+🏗️ COUCHES:
+1. Internet (Utilisateurs) → HTTPS
+2. Traefik (Reverse Proxy) → SSL, Load Balancing
+3. Frontend (Services exposés) → Drupal, Moodle, Keycloak, etc.
+4. Backend (Services internes) → PostgreSQL, Redis, Prometheus
+5. Monitoring (Observabilité) → Grafana, Kali
+
+🔐 SÉCURITÉ:
+- SSL/TLS automatique (Let's Encrypt)
+- SSO centralisé (Keycloak OpenID Connect)
+- Docker Secrets (pas de mots de passe en clair)
+- Isolation réseau frontend/backend
+- Tests de sécurité (Kali Linux)
+            `.trim();
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Architecture copiée dans le presse-papiers!');
+            }).catch(() => {
+                alert('Erreur: impossible d\'accéder au presse-papiers. Utilisez Ctrl+C manuellement.');
+            });
+        }
+
+        // Animation au chargement (améliorée)
+        document.addEventListener('DOMContentLoaded', function() {
+            const boxes = document.querySelectorAll('.service-box');
+            boxes.forEach((box, index) => {
+                box.style.opacity = '0';
+                box.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    box.style.transition = 'all 0.5s ease';
+                    box.style.opacity = '1';
+                    box.style.transform = 'translateY(0)';
+                }, 100 + index * 40);
+            });
+        });
+
+        // Fermer le panneau d'info en cliquant en dehors + ESC pour fermer
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('infoPanel');
+            if (e.target.closest('.service-box')) return;
+            if (!panel.contains(e.target)) {
+                closeInfo();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeInfo();
+            }
+        });
+    </script>
+</body>
+</html>
